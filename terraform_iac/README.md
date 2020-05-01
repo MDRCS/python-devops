@@ -65,3 +65,21 @@
       + terraform plan
       + terraform apply
 
+      5- Copying Static Files to S3
+      To test the provisioning of the static website from end to end, create a simple file called index.html
+      that includes a JPEG image, and copy both files to the S3 bucket previously provisioned with Terraform.
+      Make sure that the AWS_PROFILE environment variable is set to a correct value already present
+      in the ~/.aws/credentials file.
+
+      + cd ~/.aws
+      + aws configure list
+      + aws configure --profile IAM_SES
+      + aws s3 cp static_files/index.html s3://www.pydevops.ml/index.html
+      + aws s3 cp static_files/all.jpg s3://www.pydevops.ml/all.jpg
+
+      NB: Deleting All AWS Resources Provisioned with Terraform
+          Whenever you provision cloud resources, you need to be mindful of the cost associated with them.
+          It is very easy to forget about them, and you may be surprised by the AWS bill you receive at the end of the month.
+          Make sure to delete all the resources provisioned above. Remove these resources by running the `terraform destroy`
+          command. One more thing to note is that the contents of the S3 bucket need to be removed before running terraform
+          destroy because Terraform will not delete a nonempty bucket.
