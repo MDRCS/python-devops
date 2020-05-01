@@ -3,7 +3,7 @@ variable "aws_region" {
 }
 
 variable "domain_name" {
-  default = "pydevops.dev"
+  default = "pydevops.ml"
 }
 
 variable "zone_id" {
