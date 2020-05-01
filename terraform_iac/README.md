@@ -54,3 +54,14 @@
         + terraform apply
 
 
+      4- Provisioning a Route 53 DNS Record
+      The next module was for the creation of a Route 53 DNS record for the main domain
+      of the site www.devops4all.dev. Create a directory called modules/route53 with two files:
+      main.tf and variables.tf. The main.tf file in the route53 directory tells Terraform
+      to create a Route 53 DNS record of type A as an alias to the DNS name of the CloudFront endpoint.
+      It uses several variables that are declared in variables.tf and whose values are passed
+      to it by the caller of this module.
+      + terraform init
+      + terraform plan
+      + terraform apply
+
