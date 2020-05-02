@@ -83,3 +83,55 @@
           Make sure to delete all the resources provisioned above. Remove these resources by running the `terraform destroy`
           command. One more thing to note is that the contents of the S3 bucket need to be removed before running terraform
           destroy because Terraform will not delete a nonempty bucket.
+
+### + Getting Started with Pullumi:
+    - Automated Infrastructure Provisioning with Pulumi
+     Pulumi allows you to specify the desired state of your infrastructure by telling it
+     which resources to provision using real programming languages.
+     TypeScript was the first language supported by Pulumi,
+     but nowadays Go and Python are also supported.
+
+    With Pulumi, your Python code describes the resources that you want to be provisioned.
+    You are, in effect, creating the blueprint or the state discussed at the beginning of the chapter.
+    This makes Pulumi similar to Terraform, but the big difference is that Pulumi gives you
+    the full power of a programming language such as Python in terms of writing functions,
+    loops, using variables, etc. You are not hampered by the use of a markup language
+    such as Terraform’s HCL. Pulumi combines the power of a declarative approach,
+    where you describe the desired end state, with the power of a real programming language.
+
+    With an AWS automation library such as Boto, you both describe and provision individual
+    AWS resources through the code you write. There is no overall blueprint or state.
+    You need to keep track of the provisioned resources yourself, and to orchestrate
+    their creation and removal. This is the imperative or procedural approach for automation tools.
+    You still get the advantage of writing Python code.
+
+    1- brew install pulumi (install pulumi)
+    2- pulumi login
+    3- mkdir pulumi
+    4- cd pulumi
+    5- pulumi new
+
+    - we will create two Pulumi stacks, one called staging that corresponds
+      to a staging environment, and further down the line, another stack
+      called prod that corresponds to a production environment.
+
+    + make changes on __main__.py file to see services that will be used
+
+    6- pulumi up
+    7- pulumi stack ls
+    8- pulumi stack
+    9- pulumi stack output
+
+    $ - Staging Env
+    + mv www www-staging
+    + pulumi config set local_webdir www-staging
+    + pulumi config set domain_name staging.pydevops.ml
+    + pulumi config
+
+    + pulumi destroy (delete all)
+
+    :NOTE
+    Once the Route 53 zone was created, we had to point the Namecheap name servers
+    at the name servers specified in the DNS record for the new zone
+    so that the zone can be publicly accessible.
+

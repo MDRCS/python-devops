@@ -1,0 +1,6 @@
+config:
+  aws:region: us-east-1
+  pulumi-iac:dns_zone_id: Z053828127A7DLVIR0SVO
+  pulumi-iac:domain_name: staging.pydevops.ml
+  pulumi-iac:local_webdir: www-staging
+
