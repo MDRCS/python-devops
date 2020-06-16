@@ -37,3 +37,10 @@
 
       $ docker push mdrahali/hello-world-docker:latest
       $ docker push mdrahali/hello-world-docker:v1
+
+
+### + run docker image :
+
+    - Run docker image as a daemon :
+    $ docker run --rm -d -v `pwd`:/app -p 5000:5000 hello-world-docker
+
