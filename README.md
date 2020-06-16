@@ -173,6 +173,26 @@
 
     $ source <(sops -d environment.secrets); docker-compose up -d app
 
+    ++ Container Orchestration: Kubernetes
+    If you are experimenting with Docker, or if running a set of Docker containers on a single machine is all you need,
+    then Docker and Docker Compose would be sufficient for your needs. However, as soon as you move from the number 1 (single machine)
+    to the number 2 (multiple machines), you need to start worrying about orchestrating the containers across the network. For production scenarios,
+    this is a given. You need at least two machines to achieve fault tolerance/high availability.”
+
+    ++ We will use a tool called Kompose to translate this YAML file into a set of Kubernetes manifests.
+
+    To get a new version of Kompose on a macOS machine, first download it from the Git repository, then move it to /usr/local/bin/kompose,
+    and make it executable. Note that if you rely on your operating system’s package management system (for example, apt on Ubuntu systems
+    or yum on Red Hat systems) for installing Kompose, you may get a much older version that may not be compatible to these instructions.
+
+    -> https://kompose.io/
+    # macOS
+    $ curl -L https://github.com/kubernetes/kompose/releases/download/v1.19.0/kompose-darwin-amd64 -o kompose
+
+    $ chmod +x kompose
+    $ sudo mv ./kompose /usr/local/bin/kompose
+
+    Run the kompose convert command to create the Kubernetes manifest files from the existing docker-compose.yaml file:”
 
 
 docker stop $(docker ps -aq)
