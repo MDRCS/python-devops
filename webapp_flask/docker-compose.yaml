@@ -1,7 +1,7 @@
 version: "3"
 services:
   app:
-    image: "griggheo/flask-by-example:v1"
+    image: "mdrahali/flask-by-example:v1"
     command: "manage.py runserver --host=0.0.0.0"
     ports:
       - "5000:5000"
@@ -9,24 +9,30 @@ services:
       APP_SETTINGS: config.DevelopmentConfig
       DATABASE_URL: postgresql://wordcount_dbadmin:$DBPASS@db/wordcount_dev
       REDISTOGO_URL: redis://redis:6379
+      POSTGRES_DB: "db"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
     depends_on:
       - db
       - redis
   worker:
-    image: "griggheo/flask-by-example:v1"
+    image: "mdrahali/flask-by-example:v1"
     command: "worker.py"
     environment:
       APP_SETTINGS: config.DevelopmentConfig
       DATABASE_URL: postgresql://wordcount_dbadmin:$DBPASS@db/wordcount_dev
       REDISTOGO_URL: redis://redis:6379
+      POSTGRES_DB: "db"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
     depends_on:
       - redis
   migrations:
-    image: "griggheo/flask-by-example:v1"
+    image: "mdrahali/flask-by-example:v1"
     command: "manage.py db upgrade"
     environment:
       APP_SETTINGS: config.DevelopmentConfig
       DATABASE_URL: postgresql://wordcount_dbadmin:$DBPASS@db/wordcount_dev
+      POSTGRES_DB: "db"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
     depends_on:
       - db
   db:
@@ -36,6 +42,9 @@ services:
       - "5432:5432"
     volumes:
       - dbdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: "db"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
   redis:
     image: "redis:alpine"
     ports:
