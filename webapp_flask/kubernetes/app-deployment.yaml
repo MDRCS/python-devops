@@ -12,7 +12,7 @@ spec:
   selector:
     matchLabels:
       io.kompose.service: app
-  replicas: 1
+  replicas: 2
   strategy: {}
   template:
     metadata:

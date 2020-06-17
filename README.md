@@ -377,7 +377,7 @@
     $ kubectl logs app-79d46bd986-hhh6s -c migrations
 
     # access database inside pod :
-    $ kubectl exec -it db-57967c4668-q82mp -- psql -U postgres
+    $ kubectl exec -it db-6c9b67bcd6-wgscs -- psql -U postgres
 
     $ kubectl create -f app-service.yaml
     $ kubectl get svc
@@ -435,6 +435,272 @@
     One common performance problem with Python is the lack of true, multithreaded performance. This also can be fixed with Numba.
     Here’s an example of some basic operations:
 
-docker stop $(docker ps -aq)
-docker rm $(docker ps -aq)
-32458
+    Launching a EKS Kubernetes Cluster in AWS with Pulumi
+
+    + Start by creating a new directory:
+    $ mkdir pulumi_eks
+    $ cd pulumi_eks
+
+    $ download the content of this folder ->  https://github.com/pulumi/examples/tree/master/aws-py-eks
+
+    - Install dependencies (a virtualenv is recommended):
+
+    $ virtualenv -p python3 venv
+    $ source venv/bin/activate
+    $ pip3 install -r requirements.txt
+
+    - Create a new stack
+
+    $ pulumi stack init python-eks-testing
+
+    - Set the AWS region:
+
+    $ pulumi config set aws:region us-east-2
+
+    - Run pulumi up to preview and deploy changes:
+
+    $ pulumi up
+
+    - View the cluster name via stack output:
+
+    $ pulumi stack output
+
+    - Verify that the EKS cluster exists, by either using the AWS Console or running
+
+    $ aws eks list-clusters
+
+    - Update your KubeConfig, Authenticate to your Kubernetes Cluster and verify you have API access and nodes running.
+    %% link local kubectl to aws:eks
+
+    $ aws eks --region us-east-2 update-kubeconfig --name $(pulumi stack output cluster-name)
+
+    $ kubectl get nodes
+
+
+    # to delete this cluster
+    $ pulumi destroy
+
+
+    ++ Deploying the Flask Example Application to EKS :
+
+    $ kubectl create -f redis-deployment.yaml
+    $ kubectl create -f dbdata-persistentvolumeclaim.yaml
+    $ kubectl create -f db-deployment.yaml
+    $ kubectl logs db-6c9b67bcd6-9r5bl
+
+    $ kubectl create -f redis-service.yaml
+
+    We hit a snag when trying to create the db deployment. GKE provisioned a persistent volume that was mounted as
+    /var/lib/postgresql/data, and according to the error message above, was not empty.
+    Delete the failed db deployment:
+
+    $ kubectl delete -f db-deployment.yaml
+
+    Create a new temporary pod used to mount the same dbdata PersistentVolumeClaim as /data inside the pod, so its filesystem can
+    be inspected. Launching this type of temporary pod for troubleshooting purposes is a useful technique to know about:
+
+    $ kubectl create -f pvc-inspect.yaml
+
+    Use kubectl exec to open a shell inside the pod so /data can be inspected:
+    $ kubectl exec -it pvc-inspect -- sh
+    $ cd /data
+    $ /data # ls -la
+    $ rm -rf lost\+found/
+    $ exit
+
+    Note how /data contained a directory called lost+found that needed to be removed.
+    Delete the temporary pod:
+    $ kubectl delete pod pvc-inspect
+
+    Create the db deployment again, which completes successfully this time:
+
+    $ kubectl create -f db-deployment.yaml
+    $ kubectl get pods
+
+    Create wordcount database and role:
+    $ kubectl exec -it db-6c9b67bcd6-wgscs -- psql -Upostgres
+
+    $ postgres=# create database wordcount;
+    $ postgres=# \q
+
+    $ kubectl exec -it db-6c9b67bcd6-wgscs -- psql -U postgres wordcount
+    $ wordcount=# CREATE ROLE wordcount_dbadmin;
+    $ wordcount=# ALTER ROLE wordcount_dbadmin LOGIN;
+    $ wordcount=# ALTER USER wordcount_dbadmin PASSWORD
+    $ wordcount=# \q
+
+    $ kubectl create -f db-service.yaml
+
+    Create the Secret object based on the base64 value of the database password.
+    The plain-text value for the password is stored in a file encrypted with sops:
+
+    $ echo MYNEWPASS | base64
+    $ pip install sops
+    $ sops secrets.yaml.enc
+        apiVersion: v1
+        kind: Secret
+        metadata:
+            name: fbe-secret
+        type: Opaque
+        data:
+          dbpass: TVlORVdQQVNTCg==
+
+    $ sops -d secrets.yaml.enc | kubectl create -f -
+    $ kubectl describe secret fbe-secret
+
+    - Create another Secret object representing the Docker Hub credentials:
+    $ sops -d create_docker_credentials_secret.sh.enc | bash -
+
+    ++ Since the scenario under consideration is a production-type deployment of the appication to EKS,
+       set replicas to 3 in worker- deployment.yaml to ensure that three worker pods are running at all times:
+
+    $ kubectl create -f worker-deployment.yaml
+
+    ++ Make sure that three worker pods are running:
+
+    $ kubectl get pods
+
+    ++ Similarly, set replicas to two in app-deployment.yaml:
+    $ kubectl create -f app-deployment.yaml
+
+    ++ Make sure that two app pods are running:
+    $ kubectl get pods
+
+    Create the app service:
+    $ kubectl create -f app-service.yaml
+
+    ++ Note that a service of type LoadBalancer was created:
+    $ kubectl describe service app
+
+    - Test the application by accessing the endpoint URL based on the IP address corresponding to LoadBalancer Ingress:
+      http://aa2c4f5986b55453289d9f92aa1e7e4b-1329777127.us-east-2.elb.amazonaws.com:5000/
+
+    -> test with this url : www.bbc.com/news/world-asia-53073338
+
+    Installing Prometheus and Grafana Helm Charts
+    In its current version (v2 as of this writing), Helm has a server-side component called Tiller that needs certain permissions
+    inside the Kubernetes cluster.
+    Create a new Kubernetes Service Account for Tiller and give it the proper permissions:
+
+    $ kubectl -n kube-system create sa tiller
+
+    $ kubectl create clusterrolebinding tiller-role-binding --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+    $ helm init --service-account tiller
+    $ kubectl patch deploy --namespace kube-system \
+        tiller-deploy -p  '{"spec":{"template":{"spec": {"serviceAccount":"tiller"}}}}'
+
+    $ kubectl get pods --namespace=kube-system
+
+    1- install Helm
+    # go to https://github.com/helm/helm/releases/tag/v3.2.1
+    # copy the link of linux files
+    $ wget https://get.helm.sh/helm-v3.2.1-linux-amd64.tar.gz
+    $ ls
+
+    2- unzip the folder
+    $ tar zxvf helm-v3.2.1-linux-amd64.tar.gz
+    $ sudo mv darwin-amd64/helm /usr/local/bin
+    $ rm helm-v3.2.1-linux-amd64.tar.gz
+    $ rm -rf ./darwin-amd64
+
+    $ helm version
+
+    + Create a namespace called monitoring:
+    $ kubectl create namespace monitoring
+
+    + Install Prometeous :
+
+    $ helm install --name prometheus --namespace monitoring stable/prometheus
+        or helm install stable/prometheus-operator --version=8.2.0 --name=monitoring --namespace=monitoring
+    $ kubectl get pods -nmonitoring
+    $ kubectl get services -nmonitoring
+    $ kubectl get configmaps -nmonitoring
+
+    Connect to Prometheus UI via the kubectl port-forward command:
+    $ export PROMETHEUS_POD_NAME=$(kubectl get pods --namespace monitoring \
+      -l "app=prometheus,component=server" -o jsonpath="{.items[0].metadata.name}")
+
+    $ echo $PROMETHEUS_POD_NAME
+    prometheus-server-7555945646-d86gn
+
+    $ kubectl --namespace monitoring port-forward $PROMETHEUS_POD_NAME 9090
+
+    -> Go to localhost:9090 in a browser and see the Prometheus UI.
+
+    ++ Install the Grafana Helm chart in the monitoring namespace:
+    $ helm install --name grafana --namespace monitoring stable/grafana
+
+    List Grafana-related pods, services, configmaps, and secrets in the monitoring namespace:
+
+    $ kubectl get pods -nmonitoring | grep grafana
+    $ kubectl get services -nmonitoring | grep grafana
+    $ kubectl get configmaps -nmonitoring | grep grafana
+    $ kubectl get secrets -nmonitoring | grep grafana
+
+    Retrieve the password for the admin user for the Grafana web UI:
+    $ kubectl get secret --namespace monitoring grafana \
+      -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+    Connect to the Grafana UI using the kubectl port-forward command:
+
+    # search for grafana pod
+    $ kubectl get pods -nmonitoring | grep grafana
+    # forward a port
+    $ kubectl --namespace monitoring port-forward grafana-55744579f5-rrv7b 3000
+
+    -> login admin/BPvivW4HbcL4C9AahJyon5RmhoeWuNvGlsCqqrnC
+
+    List the charts currently installed with helm list. When a chart is installed, the current installation is called a “Helm release”:
+    $ helm list
+
+    Most of the time you will need to customize a Helm chart. It is easier to do that if you download the chart and install it from the local filesystem with helm.
+    Get the latest stable Prometheus and Grafana Helm charts with the helm fetch command, which will download tgz archives of the charts:
+
+    $ mkdir charts
+    $ cd charts
+    $ helm fetch stable/prometheus
+    $ helm fetch stable/grafana
+
+    Unarchive the tgz files, then remove them:
+    $ tar xfz prometheus-11.5.0.tgz; rm prometheus-11.5.0.tgz
+    $ tar xfz grafana-5.2.1.tgz; rm grafana-5.2.1.tgz
+
+
+    The templatized Kubernetes manifests are stored by default in a directory called templates under the chart directory, so in this case these locations
+    would be prometheus/templates and grafana/templates. The configuration values for a given chart are declared in the values.yaml file in the chart directory.
+    As an example of a Helm chart customization, let’s add a persistent volume to Grafana, so we don’t lose the data when we restart the Grafana pods.
+    Modify the file grafana/values.yaml and set the the value of the enabled subkey under the persistence parent key to true (by default it is false) in this section:
+
+    persistence:
+      type: pvc
+      enabled: true
+
+    Upgrade the existing grafana Helm release with the helm upgrade command. The last argument of the command is the name
+    of the local directory containing the chart. Run this command in the parent directory of the grafana chart directory:
+
+    $ helm upgrade grafana grafana/
+
+    Verify that a PVC has been created for Grafana in the monitoring namespace:
+    $ kubectl describe pvc grafana -nmonitoring
+
+    Another example of a Helm chart customization, this time for Prometheus, is modifying the default retention period of 15 days for the data stored in Prometheus.
+    Change the retention value in prometheus/values.yaml to 30 days:
+
+      ## Prometheus data retention period (default if not specified is 15 days)
+      ##
+      retention: "30d"
+
+    Upgrade the existing Prometheus Helm release by running helm upgrade. Run this command in the parent directory of the prometheus chart directory:
+    $ helm upgrade prometheus prometheus/
+
+    Verify that the retention period was changed to 30 days. Run kubectl describe against the running Prometheus pod in the monitoring namespace and look
+    at the Args section of the output:
+
+    $ kubectl get pods -nmonitoring
+
+    $ kubectl describe pod prometheus-server-57d8c46b6b-d5qgb -nmonitoring
+
+    # delete all the cluster from eks aws :
+    $ pulumi destroy
+
+
