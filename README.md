@@ -704,3 +704,68 @@
     $ pulumi destroy
 
 
+### ++ Serverless :
+
+    - Lambda functions can be triggered by other cloud services, use cases include:
+
+    + Extract-Transform-Load (ETL) data processing, where, as an example, a file is uploaded to S3, which triggers the execution of a
+      Lambda function that does ETL processing on the data and sends it to a queue or a backend database
+    + ETL processing on logs sent by other services to CloudWatch
+    + Scheduling tasks in a cron-like manner based on CloudWatch Events triggering Lambda functions
+    + Real-time notifications based on Amazon SNS triggering Lambda functions
+    + Email processing using Lambda and Amazon SES
+    + Serverless website hosting, with the static web resources such as Javascript, CSS, and HTML stored in S3 and fronted by the CloudFront CDN service,
+      and a REST API handled by an API Gateway routing the API requests to Lambda functions, which communicate with a backend such as Amazon RDS or Amazon DynamoDB
+
+    Caas (container as a service) vs Faas (function as a service) :
+
+    How do you choose between FaaS and CaaS? In one dimension, it depends on the unit of deployment. If you only care about short-lived functions, with few
+    dependencies and small amounts of data processing, then FaaS can work for you. If, on the other hand, you have long-running processes with lots of dependencies
+    and heavy computing power requirements, then you may be better off using CaaS. Most FaaS services have severe limits for running time (15 minutes maximum for Lambda),
+    computing power, memory size, disk space, and HTTP request and response limits. The upside to FaaS’ short execution times is that you only pay for the duration of the function.
+
+
+    Install serverless OSS:
+
+    $ sudo npm install -g serverless
+
+    + Deploying Python Function to AWS Lambda
+
+    Start by cloning the Serverless platform examples GitHub repository:
+    The Python HTTP endpoint is defined in the file handler.py:
+
+    $ git clone https://github.com/serverless/examples.git
+    $ cd aws-python-simple-http-endpoint
+    $ cd ~/.aws
+    $ cat credentials
+    $ export AWS_PROFILE=IAM_SES
+
+    The Serverless platform uses a declarative approach for specifying the resources it needs to create with a YAML file
+    called serverless.yaml. Here is file that declares a function called currentTime, corresponding to the Python function endpoint from the handler module defined previously:
+
+    $ brew upgrade node
+    $ sudo npm install -g serverless
+
+    Modify the Python version to 3.7 in serverless.yaml:
+        provider:
+          name: aws
+          runtime: python3.7
+
+    Deploy the function to AWS Lambda by running the serverless deploy command:
+    $ serverless deploy
+
+    Test the deployed AWS Lambda function by hitting its endpoint with curl:
+    handler: handler.endpoint events:
+
+    $ curl https://3a88jzlxm0.execute-api.us-east-1.amazonaws.com/dev/ping
+
+    Invoke the Lambda function directly with the serverless invoke command:
+    $ serverless invoke --function currentTime
+
+    Invoke the Lambda function directly and inspect the log (which is sent to AWS CloudWatch Logs) at the same time:
+    $ serverless invoke --function currentTime --log
+
+    One other thing we want to draw your attention to is the heavy lifting behind the scenes by the Serverless platform in the creation of AWS resources that are part of the Lambda setup. Serverless creates a CloudFormation stack called, in this case, aws-python-simple-http-endpoint-dev. You can inspect it with the aws CLI tool:
+    $ aws cloudformation describe-stack-resources \
+      --stack-name aws-python-simple-http-endpoint-dev
+      --region us-east-1 | jq '.StackResources[].ResourceType'
