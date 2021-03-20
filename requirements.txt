@@ -12,7 +12,7 @@ hello-world @ file:///Users/MDRAHALI/Desktop/Learning_Roadmap/python-devops/dist
 idna==2.9
 importlib-metadata==1.6.0
 itsdangerous==1.1.0
-Jinja2==2.11.2
+Jinja2==2.11.3
 keyring==21.2.0
 MarkupSafe==1.1.1
 more-itertools==8.2.0
