@@ -25,7 +25,7 @@ protobuf==3.11.3
 pulumi==2.1.0
 pulumi-aws==2.2.0
 py==1.8.1
-Pygments==2.6.1
+Pygments==2.7.4
 pyparsing==2.4.7
 pytest==5.4.1
 readme-renderer==26.0
