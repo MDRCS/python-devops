@@ -21,7 +21,7 @@ parver==0.3.0
 pkginfo==1.5.0.1
 pluggy==0.13.1
 prometheus-client==0.7.1
-protobuf==3.11.3
+protobuf==3.18.3
 pulumi==2.1.0
 pulumi-aws==2.2.0
 py==1.8.1
